@@ -1,0 +1,18 @@
+{
+  "AML positive": {
+    "MOB": 26,
+    "MYB": 42,
+    "_total": 68
+  },
+  "NEGATIVE": {
+    "MON": 1789,
+    "MYO": 3268,
+    "_total": 5057
+  },
+  "_grand_total": 5125,
+  "_positive": 68,
+  "_negative": 5057,
+  "_pos_pct": 1.33,
+  "_neg_pct": 98.67,
+  "_imbalance_ratio": 74.37
+}

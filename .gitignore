@@ -1,0 +1,42 @@
+# Dataset - too large, download separately
+dataset/
+dataset.zip
+
+# PyInstaller build artifacts
+dist/
+build/
+*.spec
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Session logs (user-specific)
+outputs/prediction_log.db
+
+# Personal / temp files
+*.tiff
+*.tif
+My prompt guide.docx
