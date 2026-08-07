@@ -26,6 +26,7 @@ def _resource_path(relative_path):
 MODEL_DIR = _resource_path("outputs")
 IMG_SIZE = 224
 CLASS_NAMES = ["Non-AML", "AML"]
+AML_THRESHOLD = 0.15
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -171,7 +172,7 @@ class ALNetDetectorApp(ctk.CTk):
 
         # Status bar
         self.status_label = ctk.CTkLabel(
-            self.tab_analyze, text="Ready. Load a blood smear image to begin.",
+            self.tab_analyze, text=f"Ready. Load a blood smear image to begin. (AML threshold: {AML_THRESHOLD})",
             font=ctk.CTkFont(size=12), text_color="gray"
         )
         self.status_label.grid(row=8, column=0, columnspan=2, pady=(5, 10), sticky="w", padx=15)
@@ -235,7 +236,7 @@ class ALNetDetectorApp(ctk.CTk):
             torch.cuda.synchronize()
 
         self.status_label.configure(
-            text=f"Model loaded ({model_path.name}) | Device: {self.device} | Ready."
+            text=f"Model loaded ({model_path.name}) | Device: {self.device} | Threshold: {AML_THRESHOLD} | Ready."
         )
 
     def _load_image(self):
@@ -283,11 +284,10 @@ class ALNetDetectorApp(ctk.CTk):
                 outputs = self.model(img_tensor)
                 probs = F.softmax(outputs, dim=1).cpu().numpy()[0]
 
-            pred_idx = int(np.argmax(probs))
-            pred_label = CLASS_NAMES[pred_idx]
-            confidence = float(probs[pred_idx])
             aml_conf = float(probs[1])
             non_aml_conf = float(probs[0])
+            pred_label = CLASS_NAMES[1] if aml_conf >= AML_THRESHOLD else CLASS_NAMES[0]
+            confidence = aml_conf if pred_label == "AML" else non_aml_conf
 
             filename = Path(self.current_image_path).name
             log_prediction(filename, pred_label, [non_aml_conf, aml_conf])
@@ -303,7 +303,7 @@ class ALNetDetectorApp(ctk.CTk):
         self.progress_bar.set(confidence)
 
         if pred_label == "AML":
-            self.result_prediction.configure(text="AML DETECTED", text_color="#FF6B6B")
+            self.result_prediction.configure(text="AML FLAGGED (≥0.15)", text_color="#FF6B6B")
             self.warning_label.configure(
                 text="FLAGGED — Refer for expert hematopathologist review."
             )

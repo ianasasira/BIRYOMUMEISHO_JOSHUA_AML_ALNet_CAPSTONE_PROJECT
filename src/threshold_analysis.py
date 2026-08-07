@@ -115,7 +115,7 @@ def main():
     print("Loading model and test data ...")
     model = load_model()
     _, _, test_loader = create_dataloaders(
-        batch_size=BATCH_SIZE, num_workers=0, use_weighted_sampler=False
+        batch_size=BATCH_SIZE, num_workers=0, use_balanced=False
     )
 
     print("Running inference ...")

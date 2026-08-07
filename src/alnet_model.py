@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.models as tv_models
 
 
 class DepthwiseSeparableConv(nn.Module):
@@ -161,6 +162,102 @@ class ALNet(nn.Module):
         return x
 
 
+class ALNet_EfficientNet(nn.Module):
+    """ALNet with EfficientNet-B0 backbone pre-trained on ImageNet.
+
+    Freezes the early feature extraction layers (blocks 0-5) and fine-tunes
+    the deeper layers (blocks 6-8) plus a custom classifier head.  The
+    ImageNet pre-trained features provide general edge/texture/shape
+    detectors, so the model only needs to learn AML-specific patterns from
+    the limited positive examples.
+    """
+
+    def __init__(self, num_classes=2):
+        super().__init__()
+        backbone = tv_models.efficientnet_b0(weights="IMAGENET1K_V1")
+        self.features = backbone.features
+
+        for i in range(6):
+            for p in self.features[i].parameters():
+                p.requires_grad = False
+
+        self.pool = nn.AdaptiveAvgPool2d(1)
+        self.classifier = nn.Sequential(
+            nn.Dropout(0.4),
+            nn.Linear(1280, 64),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.3),
+            nn.Linear(64, num_classes),
+        )
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.pool(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
+
+    def unfreeze_backbone(self):
+        for i in range(6, 9):
+            for p in self.features[i].parameters():
+                p.requires_grad = True
+
+
+class ALNet_DenseNet121(nn.Module):
+    """ALNet with DenseNet121 backbone pre-trained on ImageNet.
+
+    Freezes early dense blocks (1-3) and fine-tunes dense block 4 plus
+    a custom classifier head.  BatchNorm layers in frozen blocks are set
+    to eval mode so running stats are not corrupted.
+    """
+
+    def __init__(self, num_classes=2):
+        super().__init__()
+        backbone = tv_models.densenet121(weights="IMAGENET1K_V1")
+        self.features = backbone.features
+        self._frozen_blocks = 0  # will count frozen layers
+
+        self._freeze_blocks()
+        for m in self.features.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                for p in m.parameters():
+                    if not p.requires_grad:
+                        m.eval()
+
+        self.classifier = nn.Sequential(
+            nn.Dropout(0.4),
+            nn.Linear(1024, 64),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.3),
+            nn.Linear(64, num_classes),
+        )
+
+    def _freeze_blocks(self):
+        n = len(self.features)
+        frozen = 0
+        for i, child in enumerate(self.features.children()):
+            if i < n - 3:
+                for p in child.parameters():
+                    p.requires_grad = False
+                frozen += 1
+        self._frozen_blocks = frozen
+
+    def forward(self, x):
+        x = self.features(x)
+        x = F.relu(x, inplace=True)
+        x = F.adaptive_avg_pool2d(x, (1, 1))
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
+
+    def unfreeze_backbone(self):
+        n = len(self.features)
+        for i, child in enumerate(self.features.children()):
+            if i >= n - 3:
+                for p in child.parameters():
+                    p.requires_grad = True
+
+
 class WeightedFocalLoss(nn.Module):
     """Custom Weighted Focal Loss.
     
@@ -181,6 +278,18 @@ class WeightedFocalLoss(nn.Module):
         alpha_t = torch.where(targets == 1, self.alpha, 1 - self.alpha)
         focal_loss = alpha_t * ((1 - pt) ** self.gamma) * ce_loss
         return focal_loss.mean()
+
+
+class WeightedCrossEntropy(nn.Module):
+    """Cross-entropy with inverse-frequency class weights."""
+
+    def __init__(self, num_pos, num_neg):
+        super().__init__()
+        self.pos_weight = num_neg / num_pos
+
+    def forward(self, inputs, targets):
+        weight = torch.tensor([1.0, self.pos_weight], device=inputs.device)
+        return F.cross_entropy(inputs, targets, weight=weight)
 
 
 def count_parameters(model):

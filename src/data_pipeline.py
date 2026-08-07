@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
-DATASET_DIR = Path(r"C:\Users\Kelvin\Desktop\ian\dataset\dataset")
+DATASET_DIR = Path(r"E:\Mr Biryo\ian\dataset\dataset")
 OUTPUT_DIR = Path("outputs")
 MANIFEST_PATH = OUTPUT_DIR / "split_manifest.json"
 TRAIN_PCT = 0.70
@@ -216,7 +216,7 @@ def create_dataloaders(batch_size=16, num_workers=0, use_balanced=True):
         train_loader = DataLoader(train_ds, batch_sampler=sampler, num_workers=num_workers)
     else:
         train_ds = PerClassTransformDataset(
-            manifest["train"], pos_transform=TRAIN_TRANSFORM, neg_transform=TRAIN_TRANSFORM,
+            manifest["train"], pos_transform=POSITIVE_TRANSFORM, neg_transform=TRAIN_TRANSFORM,
             eval_transform=EVAL_TRANSFORM, is_train=True,
         )
         train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers)

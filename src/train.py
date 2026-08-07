@@ -9,7 +9,7 @@ import torch.nn as nn
 import numpy as np
 from torch.cuda.amp import GradScaler, autocast
 
-from data_pipeline import create_dataloaders, get_transforms
+from data_pipeline import create_dataloaders
 from alnet_model import ALNet, WeightedFocalLoss, count_parameters
 
 OUTPUT_DIR = Path("outputs")
@@ -103,7 +103,7 @@ def train():
 
     print(f"Loading data with batch_size={BATCH_SIZE} ...")
     train_loader, val_loader, test_loader = create_dataloaders(
-        batch_size=BATCH_SIZE, num_workers=0, use_weighted_sampler=True
+        batch_size=BATCH_SIZE, num_workers=0, use_balanced=True
     )
 
     print(f"Train batches: {len(train_loader)}, Val batches: {len(val_loader)}")
