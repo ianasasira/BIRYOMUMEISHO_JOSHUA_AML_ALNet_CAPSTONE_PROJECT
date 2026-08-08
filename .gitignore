@@ -1,6 +1,8 @@
 # Dataset - too large, download separately
 dataset/
 dataset.zip
+dataset_normalized/
+dataset_normalized_original/
 
 # PyInstaller build artifacts
 dist/
@@ -40,3 +42,32 @@ outputs/prediction_log.db
 *.tiff
 *.tif
 My prompt guide.docx
+
+# Old reports and models
+outputs/BIRYOMUMEISHO\ JOSHUA_CAPSTONE_REPORT.docx
+outputs/BIRYOMUMEISHO\ JOSHUA_CAPSTONE_REPORT\ NEW.docx
+outputs/BIRYOMUMEISHO\ JOSHUA_CAPSTONE_REPORT_NEW.docx
+outputs/alnet_v2_best.pt
+outputs/alnet_v2_final.pt
+outputs/alnet_efficientnet_best.pt
+outputs/alnet_efficientnet_final.pt
+outputs/alnet_efficientnet_head_best.pt
+outputs/alnet_densenet121_best.pt
+outputs/alnet_densenet121_aug_best.pt
+outputs/v2_alnet/
+outputs/dataset_inventory.json
+outputs/evaluation_results.json
+outputs/split_manifest.json
+outputs/threshold_results.json
+outputs/training_history.json
+outputs/training_history_v2.json
+outputs/training_history_efficientnet.json
+outputs/normalized/
+
+# Root-level model copy
+/alnet_best.pt
+
+# Old scripts not used in final version
+eval_efficientnet.py
+check_probs.py
+PRESENTATION_OUTLINE*.md
